@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Analyser{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav><a href="/">Cards</a> | <a href="/records">Records</a></nav>
+  {% block content %}{% endblock %}
+  <script src="/static/app.js"></script>
+</body>
+</html>
