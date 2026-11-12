@@ -1,4 +1,53 @@
 {% extends "base.html" %}
+{% block title %}Записи{% endblock %}
 {% block content %}
-<h1>Records</h1>
+<h1>Записи</h1>
+<form method="get" class="box filters">
+  <label>Поиск по тексту <input name="q" value="{{ filters.q }}" size="26" placeholder="например: oyna, окно"></label>
+  <label>Роль
+    <select name="role">
+      <option value="">все</option>
+      {% for r in ['user', 'assistant'] %}<option value="{{ r }}" {{ 'selected' if filters.role == r }}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>userLanguage
+    <select name="lang">
+      <option value="">все</option>
+      {% for l in langs %}<option value="{{ l }}" {{ 'selected' if filters.lang == l }}>{{ l }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>С даты <input type="date" name="date_from" value="{{ filters.date_from }}"></label>
+  <label>По дату <input type="date" name="date_to" value="{{ filters.date_to }}"></label>
+  <label>deletedAt
+    <select name="scope">
+      {% for s in ['all', 'active', 'deleted'] %}<option value="{{ s }}" {{ 'selected' if filters.scope == s }}>{{ SCOPE_LABEL[s] }}</option>{% endfor %}
+    </select>
+  </label>
+  <button>Применить</button>
+  <a href="/records">сбросить</a>
+</form>
+
+<div class="scope">
+  <b>Найдено: {{ total }}</b> записей. Область: {{ SCOPE_LABEL[filters.scope] }}{% if filters.date_from or filters.date_to %}; период {{ filters.date_from or '…' }} — {{ filters.date_to or '…' }}{% endif %}{% if filters.role %}; роль {{ filters.role }}{% endif %}{% if filters.lang %}; язык {{ filters.lang }}{% endif %}{% if filters.q %}; текст «{{ filters.q }}»{% endif %}.
+  Показано по {{ PAGE_SIZE }}, страница {{ page }} из {{ last }}. Это подборка по фильтрам, а не весь корпус.
+</div>
+
+<table>
+  <tr><th>id</th><th>Дата</th><th>Роль</th><th>Язык</th><th>Текст</th><th>actions</th><th>deletedAt</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td><a href="/records/{{ r.id }}">{{ r.id }}</a></td>
+    <td>{{ r.createdAt }}</td><td>{{ r.role }}</td><td>{{ r.userLanguage or '(null)' }}</td>
+    <td class="text">{{ r.text.strip('| ')[:200] }}</td>
+    <td>{{ r.actions.strip('|') or '' }}</td>
+    <td class="muted">{{ 'null' if r.deletedAt is none else 'заполнен' }}</td>
+  </tr>
+  {% else %}<tr><td colspan="7" class="muted">Ничего не найдено.</td></tr>{% endfor %}
+</table>
+
+<div class="pager">
+  {% if page > 1 %}<a href="{{ url('/records', page=page - 1, **filters) }}">← назад</a>{% endif %}
+  <span>{{ page }} / {{ last }}</span>
+  {% if page < last %}<a href="{{ url('/records', page=page + 1, **filters) }}">вперёд →</a>{% endif %}
+</div>
 {% endblock %}

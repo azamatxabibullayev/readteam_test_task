@@ -1,4 +1,45 @@
 {% extends "base.html" %}
+{% block title %}Карточки исследования{% endblock %}
 {% block content %}
-<h1>Research cards</h1>
+<h1>Что улучшить в автомобильном ассистенте</h1>
+
+<div class="scope">
+  Область анализа:
+  {% for s in scopes %}
+    {% if s == scope %}<b>{{ SCOPE_LABEL[s] }}</b>{% else %}<a href="{{ url('/', scope=s) }}">{{ SCOPE_LABEL[s] }}</a>{% endif %}{% if not loop.last %} | {% endif %}
+  {% endfor %}
+  <div class="muted">Все числа ниже относятся к выданной выборке (999 из 4995 ключей usersid_hash) и выбранной области.</div>
+</div>
+
+<h2>Карточки</h2>
+{% for c in cards %}
+<div class="box">
+  <span class="tag">{{ c.kind }}</span>
+  <h3 style="margin:.3rem 0"><a href="{{ url('/cards/' ~ c.key, scope=scope) }}">{{ c.title }}</a></h3>
+  <div>{{ c.summary }}</div>
+  <div class="muted">{{ c.numbers[0].label }}: <b>{{ c.numbers[0].value }}</b>
+    {% if c.key == 'need' %}· usersid_hash: <b>{{ c.numbers[1].value }}</b>{% endif %}</div>
+  {% if c.verdict %}<div class="muted">{{ c.verdict }}</div>{% endif %}
+</div>
+{% endfor %}
+
+<h2>Качество данных (область: {{ SCOPE_LABEL[scope] }})</h2>
+<table>
+  <tr><th>Записей</th><td class="num">{{ quality.total }}</td></tr>
+  <tr><th>Различных usersid_hash</th><td class="num">{{ quality.n_keys }}</td></tr>
+  <tr><th>Роли</th><td>{% for r, n in quality.roles.items() %}{{ r }}: {{ n }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+  <tr><th>Период createdAt</th><td>{{ quality.first }} — {{ quality.last }}</td></tr>
+  <tr><th>Пустой text</th><td class="num">{{ quality.empty_text }}</td></tr>
+  <tr><th>Ответы ассистента без кода в actions</th><td class="num">{{ quality.empty_actions }} из {{ quality.assistant }}</td></tr>
+  <tr><th>userLanguage = null</th><td class="num">{{ quality.null_lang }}</td></tr>
+  <tr><th>Языки</th><td>{% for l, n in quality.languages %}{{ l }}: {{ n }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+</table>
+<h2>Ограничения данных</h2>
+<ul class="muted">
+  <li>Нет thread_id и session_id: границы диалогов и пары «запрос → ответ» — эвристика.</li>
+  <li>usersid_hash — ключ, а не человек или автомобиль; выборка — целые ключи, а не независимые сообщения.</li>
+  <li>Ответ «сделано» и коды в actions не подтверждают выполнение действия устройством.</li>
+  <li>Единицы timeSTT/timeCache/timeGPT и часовой пояс дат не документированы; метки stt_quality и ai_quality почти везде null.</li>
+  <li>Записи с заполненным deletedAt входят в архив; причины заполнения неизвестны.</li>
+</ul>
 {% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Запись {{ rec.id }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/records">← Записи</a></p>
+<h1>Запись id={{ rec.id }}</h1>
+
+<table>
+  {% for name in rec.keys() %}
+  <tr><th>{{ name }}</th><td class="text">{% if name == 'usersid_hash' %}{{ short_key(rec[name]) }}… <span class="muted">(сокращённый ключ; не человек и не автомобиль)</span>{% else %}{{ rec[name] if rec[name] is not none else 'null' }}{% endif %}</td></tr>
+  {% endfor %}
+</table>
+<div class="muted">Дата createdAt без часового пояса — пояс не документирован. Единицы timeSTT, timeCache и timeGPT неизвестны.</div>
+
+<h2>Временной контекст</h2>
+<div class="scope">
+  Правило: {{ n }} ближайших записей до и {{ n }} после, с тем же usersid_hash, в порядке (createdAt, id), независимо от выбранной области.
+  Это <b>временной контекст, а не подтверждённый диалог</b>: идентификатора разговора в данных нет, пара «запрос → ответ» — предположение.
+</div>
+<table>
+  <tr><th>id</th><th>Дата</th><th>Роль</th><th>Текст</th><th>actions</th><th>deletedAt</th></tr>
+  {% for r in before + [rec] + after %}
+  <tr class="{{ 'current' if r.id == rec.id }}">
+    <td>{% if r.id == rec.id %}<b>{{ r.id }}</b>{% else %}<a href="/records/{{ r.id }}">{{ r.id }}</a>{% endif %}</td>
+    <td>{{ r.createdAt }}</td><td>{{ r.role }}</td>
+    <td class="text">{{ r.text.strip('| ')[:200] }}</td>
+    <td>{{ r.actions.strip('|') }}</td>
+    <td class="muted">{{ 'null' if r.deletedAt is none else 'заполнен' }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

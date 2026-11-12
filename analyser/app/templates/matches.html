@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Записи карточки{% endblock %}
+{% block content %}
+<p class="muted"><a href="{{ url('/cards/' ~ card_key, scope=scope, exclude_top=exclude_top) }}">← Карточка</a></p>
+<h1>Команды управления кузовом</h1>
+<div class="scope">
+  Область: <b>{{ SCOPE_LABEL[scope] }}</b>{% if exclude_top %}, самый активный ключ исключён{% endif %}.
+  Фильтр:
+  {% for value, label in [('', 'все команды'), ('no_action', 'ответ без action'), ('repeat', 'с повтором'), ('no_action_repeat', 'без action и с повтором')] %}
+    {% if value == only %}<b>{{ label }}</b>{% else %}<a href="{{ url('/matches', scope=scope, exclude_top=exclude_top, only=value, card_key=card_key) }}">{{ label }}</a>{% endif %}{% if not loop.last %} | {% endif %}
+  {% endfor %}
+  <div><b>Найдено: {{ total }}</b> (показано по {{ PAGE_SIZE }}, страница {{ page }} из {{ last }}). Правило отбора — на странице карточки.</div>
+</div>
+<table>
+  <tr><th>id</th><th>Дата</th><th>Язык</th><th>Команда</th><th>Ответ (id)</th><th>actions ответа</th><th>Повтор</th></tr>
+  {% for e in rows %}
+  <tr>
+    <td><a href="/records/{{ e.id }}">{{ e.id }}</a></td>
+    <td>{{ e.created }}</td><td>{{ e.lang or '(null)' }}</td>
+    <td class="text">{{ e.text.strip() }}</td>
+    <td class="text">{% if e.reply_id %}<a href="/records/{{ e.reply_id }}">{{ e.reply_id }}</a> {{ e.reply_text.strip('| ')[:90] }}{% else %}<span class="muted">нет ответа сразу следом</span>{% endif %}</td>
+    <td>{{ e.reply_actions or '(пусто)' if e.reply_id else '' }}</td>
+    <td>{% if e.repeat %}<a href="/records/{{ e.next_id }}">да ({{ e.next_id }})</a>{% else %}нет{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="7" class="muted">Ничего не найдено.</td></tr>{% endfor %}
+</table>
+<div class="pager">
+  {% if page > 1 %}<a href="{{ url('/matches', scope=scope, exclude_top=exclude_top, only=only, card_key=card_key, page=page - 1) }}">← назад</a>{% endif %}
+  <span>{{ page }} / {{ last }}</span>
+  {% if page < last %}<a href="{{ url('/matches', scope=scope, exclude_top=exclude_top, only=only, card_key=card_key, page=page + 1) }}">вперёд →</a>{% endif %}
+</div>
+{% endblock %}

@@ -1,3 +1,79 @@
 {% extends "base.html" %}
+{% block title %}{{ card.title }}{% endblock %}
 {% block content %}
+<p class="muted"><a href="{{ url('/', scope=scope) }}">← Карточки</a></p>
+<span class="tag">{{ card.kind }}</span>
+<h1>{{ card.title }}</h1>
+
+<div class="scope">
+  <b>Область анализа:</b> {{ SCOPE_LABEL[scope] }}; период: {{ card.period }}.
+  {% if card.excluded %}<br><b>{{ card.excluded }}.</b>{% endif %}
+  <div>
+    Область:
+    {% for s in scopes %}
+      {% if s == scope %}<b>{{ SCOPE_LABEL[s] }}</b>{% else %}<a href="{{ url('/cards/' ~ card.key, scope=s, exclude_top=exclude_top) }}">{{ SCOPE_LABEL[s] }}</a>{% endif %}{% if not loop.last %} | {% endif %}
+    {% endfor %}
+    ·
+    {% if exclude_top %}<a href="{{ url('/cards/' ~ card.key, scope=scope) }}">вернуть самый активный ключ</a>
+    {% else %}<a href="{{ url('/cards/' ~ card.key, scope=scope, exclude_top=1) }}">исключить самый активный ключ</a>{% endif %}
+  </div>
+  <div class="muted">Числа пересчитываются при смене области. Карточка всегда считается по всему периоду; фильтры периода, роли и языка есть на странице «Записи».</div>
+</div>
+
+<h2>Наблюдение</h2>
+<div class="box">{{ card.observation }}</div>
+
+<h2>Правило отбора</h2>
+<div class="box">{{ card.rule }}</div>
+
+<h2>Числа и база расчёта</h2>
+<div class="muted">{{ card.base }}</div>
+<table>
+  {% for n in card.numbers %}
+  <tr><th>{{ n.label }}</th><td>{{ n.value }}{% if n.note %} <span class="muted">— {{ n.note }}</span>{% endif %}</td></tr>
+  {% endfor %}
+</table>
+
+{% if card.table %}
+<table style="margin-top:.8rem">
+  <tr><th>Группа</th><th class="num">Команд (n)</th><th class="num">Повторов</th><th class="num">Доля</th><th class="num">95% интервал</th><th class="num">Ключей</th></tr>
+  {% for r in card.table %}
+  <tr>
+    <td>{{ r.label }}</td><td class="num">{{ r.n }}</td><td class="num">{{ r.repeats }}</td>
+    <td class="num">{% if r.rate is not none %}{{ "%.1f"|format(r.rate * 100) }}%{% else %}—{% endif %}</td>
+    <td class="num">{% if r.n %}{{ "%.1f"|format(r.lo * 100) }}–{{ "%.1f"|format(r.hi * 100) }}%{% else %}—{% endif %}</td>
+    <td class="num">{{ r.n_keys }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if card.verdict %}<h2>Вывод</h2><div class="verdict">{{ card.verdict }}</div>{% endif %}
+
+<p><a href="{{ url('/matches', scope=scope, exclude_top=exclude_top, only=card.matches_params.only, card_key=card.key) }}">Все подходящие записи этой карточки →</a></p>
+
+<h2>Исходные примеры</h2>
+{% for ex in card.examples %}
+<div class="box">
+  <div class="text">«{{ ex.text }}»</div>
+  {% if ex.reply is not none %}<div class="muted text">Ответ: «{{ ex.reply }}» · actions: {{ ex.actions or '(пусто)' }}</div>{% endif %}
+  <div>{% for label, i in ex.links %}<a href="/records/{{ i }}">{{ label }} id={{ i }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+</div>
+{% else %}<div class="muted">В этой области примеров нет.</div>{% endfor %}
+
+<h2>Неоднозначные примеры и контрпримеры</h2>
+{% for ex in card.counters %}
+<div class="box">
+  <div class="text">«{{ ex.text }}»</div>
+  {% if ex.reply is not none and ex.reply is defined %}<div class="muted text">Ответ: «{{ ex.reply }}» · actions: {{ ex.actions or '(пусто)' }}</div>{% endif %}
+  <div>{% for label, i in ex.links %}<a href="/records/{{ i }}">{{ label }} id={{ i }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  <div class="warn" style="margin-top:.4rem">{{ ex.note }}</div>
+</div>
+{% else %}<div class="muted">В этой области таких примеров нет.</div>{% endfor %}
+
+<h2>Предлагаемое улучшение / следующий эксперимент</h2>
+<div class="box">{{ card.proposal }}</div>
+
+<h2>Ограничения вывода</h2>
+<ul class="muted">{% for l in card.limits %}<li>{{ l }}</li>{% endfor %}</ul>
 {% endblock %}
